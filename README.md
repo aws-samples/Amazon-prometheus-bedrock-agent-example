@@ -1,17 +1,22 @@
-## My Project
+--------------------------------------------------------------------------------
+Amazon Prometheus Bedrock Agent Example
+--------------------------------------------------------------------------------
 
-TODO: Fill this README out!
 
-Be sure to:
+Creates a Zip with additional python modules and code
+Creates an IAM role and Lambda function for BedRock Agent to query AMP
 
-* Change the title in this README
-* Edit your repository description on GitHub
+## Requirements
+python3   
+pip  <- Must be part of path or script will fail  
+boto3  
 
-## Security
+## How to 
+clone repo:
+> git clone https://github.com/aws-samples/Amazon-prometheus-bedrock-agent-example.git
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+Run Stage script
+> python3 ./lambda/amp-agent/stage.py --amp-workspace-id <amp-workspace-id>  
 
-## License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
-
+Example:
+> python3 ./stage.py --amp-workspace-id ws-11111111-1111-1111-1111-111111111111

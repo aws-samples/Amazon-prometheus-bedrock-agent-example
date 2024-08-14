@@ -16,7 +16,7 @@ clone repo:
 > git clone https://github.com/aws-samples/Amazon-prometheus-bedrock-agent-example.git
 
 Run Stage script
-> python3 ./lambda/amp-agent/stage.py --amp-workspace-id <amp-workspace-id>  
+> python3 ./stage.py --amp-workspace-id <amp-workspace-id>  
 
 Example:
 > python3 ./stage.py --amp-workspace-id ws-11111111-1111-1111-1111-111111111111

@@ -46,6 +46,8 @@ make_archive(f"{tmp_dir}/lambda", 'zip',tmp_dir)
 
 role_name = f"{args.resource_prefix}lambda-role"
 print(f"role_name: {role_name}")
+lambda_function_name = f"{args.resource_prefix}function"
+print(f"lambda_function_name: {lambda_function_name}")
 
 try:
     iam_client.create_role(
@@ -82,7 +84,7 @@ iam_client.put_role_policy(
 while True:
     try:
         lambda_client.create_function(
-            FunctionName=f"{args.resource_prefix}function",
+            FunctionName=lambda_function_name,
             Runtime='python3.12',
             Handler='index.lambda_handler',
             Code={'ZipFile': open(f"{tmp_dir}/lambda.zip", 'rb').read()},
@@ -97,7 +99,17 @@ while True:
         break
     except lambda_client.exceptions.ResourceConflictException:
         print ("Function already exists.  No action needed.")
+        break
     except lambda_client.exceptions.InvalidParameterValueException:
         sleep (5)
     except Exception as e:
         print (e)
+
+lambda_client.add_permission(
+    FunctionName=lambda_function_name,
+    StatementId="bedrock-access",
+    Action='lambda:InvokeFunction',
+    Principal='bedrock.amazonaws.com',
+    SourceAccount=account_id,
+    SourceArn=f"arn:aws:bedrock:{args.amp_region}:{account_id}:agent/*"
+)

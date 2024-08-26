@@ -4,6 +4,7 @@ import json
 import subprocess
 import sys
 import argparse
+from time import sleep
 from shutil import copyfile, make_archive
 from tempfile import mkdtemp
 
@@ -19,7 +20,7 @@ def amp_region_type(arg_value):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--amp-workspace-id', type=amp_workspace_id_type, required=True, help='Amazon Managed Service for Prometheus (AMP) workspace ID')
-parser.add_argument('--amp-region', type=amp_region_type, default='<Default>', help='Amazon Managed Service for Prometheus (AMP) region')
+parser.add_argument('--amp-region', type=amp_region_type, default=boto3.Session().region_name, help='Amazon Managed Service for Prometheus (AMP) region')
 parser.add_argument('--resource-prefix', type=str, default='amp-bedrock-agent-', help='Resource prefix for AWS Resources')
 
 boto3_session = boto3.Session()
@@ -27,9 +28,9 @@ account_id = boto3_session.client('sts').get_caller_identity().get('Account')
 
 args = parser.parse_args()
 
-s3_client = boto3_session.client('s3')
-iam_client = boto3_session.client('iam')
-lambda_client = boto3_session.client('lambda')
+s3_client = boto3_session.client('s3', region_name=args.amp_region)
+iam_client = boto3_session.client('iam', region_name=args.amp_region)
+lambda_client = boto3_session.client('lambda', region_name=args.amp_region)
 
 tmp_dir = mkdtemp(prefix=args.resource_prefix)
 
@@ -43,9 +44,12 @@ for package in ['requests_aws4auth','requests']:
 
 make_archive(f"{tmp_dir}/lambda", 'zip',tmp_dir)
 
+role_name = f"{args.resource_prefix}lambda-role"
+print(f"role_name: {role_name}")
+
 try:
     iam_client.create_role(
-        RoleName=f"{args.resource_prefix}lambda-role",
+        RoleName=role_name,
         AssumeRolePolicyDocument='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"lambda.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
     )
 except iam_client.exceptions.EntityAlreadyExistsException:
@@ -54,7 +58,7 @@ except Exception as e:
     print (e)
 
 iam_client.attach_role_policy(
-    RoleName=f"{args.resource_prefix}lambda-role",
+    RoleName=role_name,
     PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
 )
 
@@ -75,21 +79,25 @@ iam_client.put_role_policy(
     PolicyName='AMP',
     PolicyDocument=json.dumps(amp_policy)
 )
-try:
-    lambda_client.create_function(
-        FunctionName=f"{args.resource_prefix}function",
-        Runtime='python3.12',
-        Handler='index.lambda_handler',
-        Code={'ZipFile': open(f"{tmp_dir}/lambda.zip", 'rb').read()},
-        Role=f"arn:aws:iam::{account_id}:role/{args.resource_prefix}-lambda-role",
-        Environment={
-            'Variables': {
-                'AMP_WORKSPACE_ID': args.amp_workspace_id,
-                'AMP_REGION': args.amp_region
+while True:
+    try:
+        lambda_client.create_function(
+            FunctionName=f"{args.resource_prefix}function",
+            Runtime='python3.12',
+            Handler='index.lambda_handler',
+            Code={'ZipFile': open(f"{tmp_dir}/lambda.zip", 'rb').read()},
+            Role=f"arn:aws:iam::{account_id}:role/{role_name}",
+            Environment={
+                'Variables': {
+                    'AMP_WORKSPACE_ID': args.amp_workspace_id,
+                    'AMP_REGION': args.amp_region
+                }
             }
-        }
-    )
-except lambda_client.exceptions.ResourceConflictException:
-    print ("Function already exists.  No action needed.")
-except Exception as e:
-    print (e)
+        )
+        break
+    except lambda_client.exceptions.ResourceConflictException:
+        print ("Function already exists.  No action needed.")
+    except lambda_client.exceptions.InvalidParameterValueException:
+        sleep (5)
+    except Exception as e:
+        print (e)

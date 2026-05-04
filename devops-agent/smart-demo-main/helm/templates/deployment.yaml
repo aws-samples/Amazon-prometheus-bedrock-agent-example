@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    version: {{ .Values.image.tag | quote }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+        version: {{ .Values.image.tag | quote }}
+        tags.datadoghq.com/service: {{ .Values.datadog.logService }}
+        tags.datadoghq.com/version: {{ .Values.image.tag | quote }}
+      annotations:
+        # --- Datadog log collection ---
+        # Tells DD agent to collect logs from this pod and parse as JSON
+        ad.datadoghq.com/{{ .Release.Name }}.logs: |
+          [{
+            "source": {{ .Values.datadog.logSource | quote }},
+            "service": {{ .Values.datadog.logService | quote }},
+            "log_processing_rules": [{
+              "type": "multi_line",
+              "name": "json_logs",
+              "pattern": "^\\{"
+            }]
+          }]
+        # --- Datadog Prometheus scraping ---
+        # DD agent autodiscovery: scrape /metrics on port 8080
+        ad.datadoghq.com/{{ .Release.Name }}.checks: |
+          {
+            "openmetrics": {
+              "instances": [{
+                "openmetrics_endpoint": "http://%%host%%:8080/metrics",
+                "namespace": "sample_app",
+                "metrics": [
+                  "app_requests_total",
+                  "app_request_duration_seconds.*",
+                  "app_active_requests",
+                  "app_messages_processed_total"
+                ]
+              }]
+            }
+          }
+    spec:
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: SERVICE_NAME
+              value: {{ .Values.env.SERVICE_NAME | quote }}
+            - name: SERVICE_VERSION
+              value: {{ .Values.env.SERVICE_VERSION | quote }}
+            # Inject DD_ENV, DD_SERVICE, DD_VERSION for unified service tagging
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_SERVICE
+              value: {{ .Values.datadog.logService | quote }}
+            - name: DD_VERSION
+              value: {{ .Values.image.tag | quote }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

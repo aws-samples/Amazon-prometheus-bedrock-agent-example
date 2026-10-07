@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "argocd-strands-agent"
+version = "0.1.0"
+description = "Strands Agent for ArgoCD operations deployed on AWS AgentCore"
+requires-python = ">=3.11"
+dependencies = [
+    "strands-agents>=0.1.0",
+    "bedrock-agentcore>=0.1.0",
+    "boto3>=1.34.0",
+    "requests>=2.31.0",
+    "kubernetes>=28.1.0",
+    "urllib3>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "hypothesis>=6.92.0",
+    "pytest-mock>=3.12.0",
+    "moto>=5.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "app/argocd_agent"]

@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: helm-guestbook
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ss1796/argocd-example-apps
+    targetRevision: HEAD
+    path: helm-guestbook
+    helm:           
+      valueFiles:
+      - values.yaml
+  destination:
+    # name must match the cluster name registered in ArgoCD (usually the
+    # EKS cluster name itself). Set via: export EKS_CLUSTER=<your-cluster-name>
+    name: ${EKS_CLUSTER}
+    namespace: helm-guestbook
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    # Tell Argo CD to automatically create the namespace on the EKS cluster if missing
+    syncOptions:
+    - CreateNamespace=true

@@ -1,0 +1,39 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argocd-agent-eks
+  labels:
+    app.kubernetes.io/name: argocd-agent-eks
+rules:
+  # ArgoCD Application CRDs
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "list", "patch", "update"]
+  # K8sGPT Result CRDs
+  - apiGroups: ["core.k8sgpt.ai"]
+    resources: ["results"]
+    verbs: ["get", "list"]
+  # Pod management (for pre-delete before sync)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+  # Namespace access
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argocd-agent-eks
+  labels:
+    app.kubernetes.io/name: argocd-agent-eks
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argocd-agent-eks
+subjects:
+  - kind: ServiceAccount
+    name: argocd-agent-eks
+    namespace: argocd-agent

@@ -301,7 +301,7 @@ apigw() {
   echo "  ────────────────────────────"
   echo "    Agent card endpoint: ${APIGW_URL}/.well-known/agent-card.json"
   echo "    Authentication:      AWS SigV4"
-  echo "    IAM Role:            DevOpsAgentElevatedRoleforEKS"
+  echo "    IAM Role:            DevOpsAgentRemoteAgentInvokeRole"
   echo "    Region:              ${AWS_REGION}"
   echo "    Service Name:        execute-api"
   echo ""
@@ -337,7 +337,7 @@ status() {
     echo "  DevOps Agent Configuration:"
     echo "    Agent card endpoint: ${APIGW_URL}/.well-known/agent-card.json"
     echo "    Authentication:      AWS SigV4"
-    echo "    IAM Role:            DevOpsAgentElevatedRoleforEKS"
+    echo "    IAM Role:            DevOpsAgentRemoteAgentInvokeRole"
     echo "    Region:              ${AWS_REGION}"
     echo "    Service Name:        execute-api"
   else

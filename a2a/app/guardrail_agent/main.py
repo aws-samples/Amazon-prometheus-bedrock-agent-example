@@ -173,4 +173,10 @@ async def handle_message_send(jsonrpc_id, params: dict):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "9001"))
-    uvicorn.run("app.guardrail_agent.main:app", host="0.0.0.0", port=port, log_level="info")
+    # The agent runs as a container in an EKS pod and must listen on all
+    # interfaces so the kubelet health check, the Service, and the NLB target
+    # can reach it; a loopback bind would make the pod unreachable. The pod is
+    # not directly internet-exposed — access is fronted by API Gateway + an
+    # internal NLB. HOST can be overridden for local development.
+    host = os.environ.get("HOST", "0.0.0.0")  # nosec B104 - containerized pod, see comment above
+    uvicorn.run("app.guardrail_agent.main:app", host=host, port=port, log_level="info")

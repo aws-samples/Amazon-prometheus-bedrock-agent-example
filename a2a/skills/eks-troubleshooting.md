@@ -2,7 +2,7 @@
 
 ## Remote Agents
 
-- `argocds-ekd` — EKS troubleshooting and remediation (diagnostics, memory adjustment, restart/rollback)
+- `argocd-eks` — EKS troubleshooting and remediation (diagnostics, memory adjustment, restart/rollback)
 - `guardrail-agent` — Validates guardrail conditions before allowing destructive changes
 
 Do not use Container Insights, CloudWatch, kubectl, or any other method.
@@ -21,7 +21,7 @@ Pass these to the remote agents in your messages:
 
 ### Step 1: Run Diagnostics
 
-Always start by requesting K8sGPT diagnostics from `argocds-ekd`. Send a concise, direct message:
+Always start by requesting K8sGPT diagnostics from `argocd-eks`. Send a concise, direct message:
 
 "Run k8sgpt-diagnostics for cluster {EKS_CLUSTER_NAME} in {Region}"
 
@@ -61,7 +61,7 @@ If diagnostics reveal a pod with OOMKilled reason AND the guardrail check return
 
 1. Determine the current memory limit from the diagnostic details
 2. Double the memory limit (e.g., 100Mi → 200Mi, 200Mi → 400Mi, 512Mi → 1Gi)
-3. Send the adjustment to `argocds-ekd`:
+3. Send the adjustment to `argocd-eks`:
    "Adjust memory for pod {pod_name} in app {app_name} to {doubled_limit}"
 4. Wait 90 seconds for the pod to restart and K8sGPT to update its results
 5. Check ArgoCD application status:

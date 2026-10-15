@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memory-demo
+  labels:
+    app.kubernetes.io/name: memory-demo
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: memory-demo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: memory-demo
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: memory-demo-ctr
+          image: polinux/stress
+          command: ["stress"]
+          args: ["--vm", "1", "--vm-bytes", "205M", "--vm-hang", "1"]
+          resources:
+            limits:
+              memory: {{ .Values.memoryDemo.resources.limits.memory | default "200Mi" | quote }}
+            requests:
+              memory: {{ .Values.memoryDemo.resources.requests.memory | default "100Mi" | quote }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: memory-demo-pdb
+  labels:
+    app.kubernetes.io/name: memory-demo
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: memory-demo

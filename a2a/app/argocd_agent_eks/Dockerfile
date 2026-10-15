@@ -1,4 +1,7 @@
-FROM python:3.12-slim
+# Base image pulled from Amazon ECR Public (mirror of the official Docker
+# Library Python image) rather than Docker Hub, per BuilderHub container
+# guidelines and to avoid Docker Hub rate limiting.
+FROM public.ecr.aws/docker/library/python:3.12-slim
 
 WORKDIR /app
 

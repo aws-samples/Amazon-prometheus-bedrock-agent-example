@@ -24,10 +24,11 @@ The end-to-end setup — prerequisites, K8sGPT install, deploying both agents, A
 ├── k8s/                     # Kubernetes manifests for the EKS agents
 ├── skills/                  # EKS troubleshooting skill for the DevOps Agent
 ├── lambda/                  # Standalone Lambda implementations (reference)
+├── tests/                   # Unit, property-based, and integration tests
 ├── deploy-argocd-eks.sh     # Build/deploy/apigw for the ArgoCD EKS agent
 ├── deploy-guardrail-agent.sh# Build/deploy for the guardrail agent
 ├── deploy-argocd-agentcore.sh # Deploy the Bedrock AgentCore ArgoCD agent
-├── argocd-application2.yaml # Sample ArgoCD Application for the demo app
+├── argocd-application.yaml # Sample ArgoCD Application for the demo app
 ├── blog/                    # Blog post walkthrough
 ├── Dockerfile
 ├── pyproject.toml
@@ -57,3 +58,12 @@ source .venv/bin/activate
 # Install the package with dev dependencies
 pip install -e ".[dev]"
 
+# Run the test suite
+pytest tests/ -v
+```
+
+## Testing
+
+- **Unit tests** (`tests/unit/`) — per-module behavior with mocked dependencies.
+- **Property-based tests** (`tests/property/`) — [Hypothesis](https://hypothesis.readthedocs.io/) checks of universal properties (input validation, camelCase conversion, no unexpected-exception leakage, no stack-trace leakage).
+- **Integration tests** (`tests/integration/`) — end-to-end flows with mocked AWS services.
